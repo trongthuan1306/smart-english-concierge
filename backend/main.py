@@ -1,5 +1,6 @@
 import logging
 import json
+import os
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
@@ -26,10 +27,15 @@ app = FastAPI(title="Smart English Concierge API")
 # Initialize database tables
 Base.metadata.create_all(bind=engine)
 
-# Setup CORS - Allow all for local development
+# Setup CORS
+allowed_origins = [
+    "http://localhost:5173",               # Vite dev server
+    "http://localhost:3000",               # Alternative local dev
+    "https://smart-english-frontend-183082507811.asia-southeast1.run.app",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -112,3 +118,9 @@ def get_vocabulary(db: Session = Depends(get_db)):
     except Exception as e:
         logger.exception("Error reading vocabulary from database")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
